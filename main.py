@@ -5,10 +5,12 @@ import bcrypt
 import time
 import os
 
+
 conn_users = sqlite3.connect("users.db")
 conn_scores = sqlite3.connect("scores.db")
 cursor_users = conn_users.cursor()
 cursor_scores = conn_scores.cursor()
+
 
 cursor_users.execute('''CREATE TABLE IF NOT EXISTS users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,7 +23,6 @@ cursor_scores.execute('''CREATE TABLE IF NOT EXISTS scores (
                         username TEXT, 
                         score INTEGER)''')
 conn_scores.commit()
-
 
 def get_user_scores_and_max(username):
     cursor_scores.execute("SELECT score FROM scores WHERE username = ?", (username,))
@@ -53,11 +54,12 @@ def signup():
         return login()
 
     else:
-        print("Les mots de passe ne correspondent pas.")
-        time.sleep(1)
-        os.system("cls" if os.name == "nt" else "clear")
+         print("Les mots de passe ne correspondent pas.")
+         time.sleep(1)
+         os.system("cls" if os.name == "nt" else "clear")
 
-        return None
+         return None
+
 
 
 def login():
@@ -101,6 +103,7 @@ def classement():
             print(f"{i}. {user} - {score} points")
 
 
+
 user = None
 while not user:
     print("--- MENU PRINCIPAL ---")
@@ -121,48 +124,140 @@ while not user:
         time.sleep(1)
         os.system("cls" if os.name == "nt" else "clear")
 
-while True:
-    path = "mots_fr.csv"
-    texte2 = pd.read_csv(path, sep=";")
-    mots_d = texte2['mots']
-    texte = []
-    saisie_utilisateur = []
 
+langue = input("quel langue voulez vous ? (en/fr/es)")
+langue.lower()
+if langue == "fr":
     while True:
-        try:
-            g = int(input("Combien de mots voulez-vous ? : "))
+        path = "mots_fr.csv"
+        texte2 = pd.read_csv(path, sep=";")
+        mots_d = texte2['mots']
+        texte = []
+        saisie_utilisateur = []
+
+        while True:
+            try:
+                g = int(input("Combien de mots voulez-vous ? : "))
+                break
+
+            except ValueError:
+                print("Ce n'est pas un nombre, essaye encore.")
+
+        for _ in range(g):
+            r = random.randint(1, len(mots_d) - 1)
+            texte.append(mots_d[r])
+
+        input("Appuyez sur Entrée quand vous êtes prêt...")
+        heure_debut = time.time()
+
+        for i, mot in enumerate(texte):
+            print(f"Tapez le texte suivant: {mot}")
+            saisie = input("Commencez à taper: ")
+            saisie_utilisateur.append(saisie)
+        heure_fin = time.time()
+
+        temps = int(heure_fin - heure_debut)
+        os.system("cls" if os.name == "nt" else "clear")
+        faux = sum(1 for i in range(len(texte)) if saisie_utilisateur[i] != texte[i])
+        score = (len(texte) - faux) / temps * 100
+        score = int(score)
+        print(f"Votre score final est de {score} points !")
+        score_save(user, score)
+        classement()
+        user_scores, max_score = get_user_scores_and_max(user)
+        rejouer = input("Voulez-vous rejouer ? (oui/non) : ").lower()
+        if rejouer != "oui":
             break
 
-        except ValueError:
-            print("Ce n'est pas un nombre, essaye encore.")
+    conn_users.close()
+    conn_scores.close()
+elif langue == "en":
 
-    for _ in range(g):
-        r = random.randint(1, len(mots_d) - 1)
-        texte.append(mots_d[r])
+    while True:
+        path = "mots_en.csv"
+        texte2 = pd.read_csv(path, sep=";")
+        mots_d = texte2['mots']
+        texte = []
+        saisie_utilisateur = []
 
-    input("Appuyez sur Entrée quand vous êtes prêt...")
-    heure_debut = time.time()
+        while True:
+            try:
+                g = int(input("Combien de mots voulez-vous ? : "))
+                break
 
-    for i, mot in enumerate(texte):
-        print(f"Tapez le texte suivant: {mot}")
-        saisie = input("Commencez à taper: ")
-        saisie_utilisateur.append(saisie)
-    heure_fin = time.time()
+            except ValueError:
+                print("Ce n'est pas un nombre, essaye encore.")
 
-    temps = int(heure_fin - heure_debut)
-    os.system("cls" if os.name == "nt" else "clear")
-    faux = sum(1 for i in range(len(texte)) if saisie_utilisateur[i] != texte[i])
-    score = (len(texte) - faux) / temps * 100
-    score = int(score)
-    print(f"Votre score final est de {score} points !")
-    score_save(user, score)
-    classement()
-    user_scores, max_score = get_user_scores_and_max(user)
-    print(f"Scores de {user}: {user_scores}")
-    print(f"Score maximum de {user}: {max_score}")
-    rejouer = input("Voulez-vous rejouer ? (oui/non) : ").lower()
-    if rejouer != "oui":
-        break
+        for _ in range(g):
+            r = random.randint(1, len(mots_d) - 1)
+            texte.append(mots_d[r])
 
-conn_users.close()
-conn_scores.close()
+        input("Appuyez sur Entrée quand vous êtes prêt...")
+        heure_debut = time.time()
+
+        for i, mot in enumerate(texte):
+            print(f"Tapez le texte suivant: {mot}")
+            saisie = input("Commencez à taper: ")
+            saisie_utilisateur.append(saisie)
+        heure_fin = time.time()
+
+        temps = int(heure_fin - heure_debut)
+        os.system("cls" if os.name == "nt" else "clear")
+        faux = sum(1 for i in range(len(texte)) if saisie_utilisateur[i] != texte[i])
+        score = (len(texte) - faux) / temps * 100
+        score = int(score)
+        print(f"Votre score final est de {score} points !")
+        score_save(user, score)
+        classement()
+        user_scores, max_score = get_user_scores_and_max(user)
+        rejouer = input("Voulez-vous rejouer ? (oui/non) : ").lower()
+        if rejouer != "oui":
+            break
+
+    conn_users.close()
+    conn_scores.close()
+elif langue == "es" :
+
+    while True:
+        path = "mots_es.csv"
+        texte2 = pd.read_csv(path, sep=";")
+        mots_d = texte2['mots']
+        texte = []
+        saisie_utilisateur = []
+
+        while True:
+            try:
+                g = int(input("Combien de mots voulez-vous ? : "))
+                break
+
+            except ValueError:
+                print("Ce n'est pas un nombre, essaye encore.")
+
+        for _ in range(g):
+            r = random.randint(1, len(mots_d) - 1)
+            texte.append(mots_d[r])
+
+        input("Appuyez sur Entrée quand vous êtes prêt...")
+        heure_debut = time.time()
+
+        for i, mot in enumerate(texte):
+            print(f"Tapez le texte suivant: {mot}")
+            saisie = input("Commencez à taper: ")
+            saisie_utilisateur.append(saisie)
+        heure_fin = time.time()
+
+        temps = int(heure_fin - heure_debut)
+        os.system("cls" if os.name == "nt" else "clear")
+        faux = sum(1 for i in range(len(texte)) if saisie_utilisateur[i] != texte[i])
+        score = (len(texte) - faux) / temps * 100
+        score = int(score)
+        print(f"Votre score final est de {score} points !")
+        score_save(user, score)
+        classement()
+        user_scores, max_score = get_user_scores_and_max(user)
+        rejouer = input("Voulez-vous rejouer ? (oui/non) : ").lower()
+        if rejouer != "oui":
+            break
+
+    conn_users.close()
+    conn_scores.close()
